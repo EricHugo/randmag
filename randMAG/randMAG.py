@@ -32,7 +32,7 @@ def _worker(seq, dist_param, min_length, comp=1.0, contam=0.0):
     # remove contigs based on desired completeness
     # return dict of genome with list of contig sizes produced
     ## to be used for contamination simulation
-    print(genome_length)
+    #print(genome_length)
     return contigs, name
 
 def get_seq_length(seq):
@@ -42,8 +42,8 @@ def get_seq_length(seq):
         print(len(seq_fasta))
     # only takes the length of first contig, should be chromosome
     seq_length = len(seq_fasta[0])
-    print(type(seq_fasta[0]))
-    print(seq_fasta[0][0:20])
+    #print(type(seq_fasta[0]))
+    #print(seq_fasta[0][0:20])
     return seq_fasta, seq_length
 
 def split_contigs(seq, params, min_length=300):
@@ -103,7 +103,7 @@ def main():
     distribution = f.find_best_dist()
     f.histogram(distribution)
     params = stats.gamma.fit(distances)
-    print(params)
+    #print(params)
     # feed into worker with random sampling
 
     if not args.num:
@@ -113,7 +113,7 @@ def main():
             contigs, name = _worker(seq, params, min(distances))
             output_randcontigs(name, contigs)
             args.num -= 1
-            print(args.num)
+            #print(args.num)
             if args.num <= 0:
                 break
 
