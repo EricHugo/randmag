@@ -108,11 +108,14 @@ def main():
 
     if not args.num:
         args.num = len(input_seqs)
-    while args.num:
+    while args.num > 0:
         for seq in input_seqs:
             contigs, name = _worker(seq, params, min(distances))
             output_randcontigs(name, contigs)
             args.num -= 1
+            print(args.num)
+            if args.num <= 0:
+                break
 
 if __name__ == "__main__":
     main()
