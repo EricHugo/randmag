@@ -33,7 +33,7 @@ def _worker(seq, dist_param, min_length, comp=1.0, contam=0.0):
     # return dict of genome with list of contig sizes produced
     ## to be used for contamination simulation
     #print(genome_length)
-    return contigs, name
+    return contigs, name.split('.')[0]
 
 def get_seq_length(seq):
     seq_fasta = [seqi.seq for seqi in SeqIO.parse(seq, "fasta")]
@@ -64,7 +64,7 @@ def split_contigs(seq, params, min_length=300):
 def output_randcontigs(name, genome):
     """Writes shuffled contigs to file"""
     randname = ''.join([random.choice(string.ascii_lowercase) for _ in range(8)])
-    with open(name + randname + ".out", "w") as handle:
+    with open(name + '.' + randname + ".fna", "w") as handle:
         # necessary to put keys into list before shuffle
         shuffled_headers = list(genome.keys())
         random.shuffle(shuffled_headers)
