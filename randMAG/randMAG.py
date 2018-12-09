@@ -49,9 +49,7 @@ def get_seq_length(seq):
 def split_contigs(seq, params, min_length=300):
     # get the parameters here
     shape, _, scale = params
-    while True:
-        if not seq[0]:
-            return
+    while seq[0]:
         size = round(np.random.gamma(shape, scale))
         #print(size)
         contig = seq[0][0:size-1]
@@ -63,7 +61,8 @@ def split_contigs(seq, params, min_length=300):
 
 def output_randcontigs(name, genome):
     """Writes shuffled contigs to file"""
-    randname = ''.join([random.choice(string.ascii_lowercase) for _ in range(8)])
+    randname = ''.join([random.choice(string.ascii_lowercase)
+                        for _ in range(8)])
     with open(name + '.' + randname + ".fna", "w") as handle:
         # necessary to put keys into list before shuffle
         shuffled_headers = list(genome.keys())
