@@ -63,7 +63,7 @@ def output_randcontigs(name, genome):
     """Writes shuffled contigs to file"""
     randname = ''.join([random.choice(string.ascii_lowercase)
                         for _ in range(8)])
-    with open(name + '.' + randname + ".fna", "w") as handle:
+    with open(name + '_' + randname + ".fna", "w") as handle:
         # necessary to put keys into list before shuffle
         shuffled_headers = list(genome.keys())
         random.shuffle(shuffled_headers)
