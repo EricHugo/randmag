@@ -21,17 +21,16 @@ from Bio import SeqIO
 from scipy import stats
 from fitdist import FitDist
 
-def _worker(seq, dist_param, min_length, comp=1.0, contam=0.0):
+def _worker(seq, dist_param, min_length):
     basename = os.path.basename(seq)
-    name = '.'.join(basename.split('.'))
+    name = '.'.join(basename.split('.')[:-1])
     print(name)
     # find full length of genome
     genome, genome_length = get_seq_length(seq)
     # split into contig given sizes in loop
-    contigs = {name + " # " + len(contig): contig for contig in 
-               split_contigs(genome, dist_param)}
+    contigs = {str(len(contig)) + "_" + str(i): contig for i, contig in
+               enumerate(split_contigs(genome, dist_param))}
     #print(contigs)
-    # remove contigs based on desired completeness
     # return dict of genome with list of contig sizes produced
     ## to be used for contamination simulation
     #print(genome_length)
@@ -63,17 +62,21 @@ def split_contigs(seq, params, min_length=300):
 
 def alter_completeness(contigs, completeness):
     # get the dict keys of contig lengths
-    contig_lengths = [int(length) for length in contigs.keys()]
+    contig_lengths = {length: int(''.join(length.split('_')[0])) for length in contigs.keys()}
     # sum for complete genome length
-    total_length = sum(contig_lengths)
+    total_length = sum(contig_lengths.values())
     # try to remove contig lengths down to completeness
     removed_contigs = []
-    while sum(removed_contigs) < (1 - float(completeness)) * total_length:
-        removed_contigs.append(random.choice(contig_lengths))
-        #print(removed_contigs)
-    new_contigs = {length: contigs[length] for length in
-                   contig_lengths if not length in removed_contigs}
-    new_completeness = 1 - (sum(removed_contigs) - total_length)
+    removed_sizes = []
+    print(type(sum(removed_sizes)))
+    while sum(removed_sizes) < (1 - float(completeness)) * total_length:
+        removed_contigs.append(random.choice(list(contig_lengths.keys())))
+        print(removed_contigs)
+        removed_sizes.append(int(removed_contigs[-1].split('_')[0]))
+        print(removed_sizes)
+    new_contigs = {contig: contigs[contig] for contig in
+                   contig_lengths.keys() if not contig in removed_contigs}
+    new_completeness = 1 - (sum(removed_sizes) - total_length)
     return new_contigs, new_completeness
 
 def output_randcontigs(name, genome):
