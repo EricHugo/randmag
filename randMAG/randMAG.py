@@ -37,6 +37,8 @@ def _worker(seq, dist_param, min_length):
     return contigs, name
 
 def get_seq_length(seq):
+    """Returns a biopython SeqObject, and sequence length of given sequence
+    file. Warns if file consists of multiple contigs."""
     seq_fasta = [seqi.seq for seqi in SeqIO.parse(seq, "fasta")]
     if len(seq_fasta) > 1:
         print("Warning, more than one contig in genome", file=sys.stderr)
@@ -48,6 +50,8 @@ def get_seq_length(seq):
     return seq_fasta, seq_length
 
 def split_contigs(seq, params, min_length=300):
+    """Splits given biopython SeqObject randomly according to parameters
+    of a gamma distribution"""
     # get the parameters here
     shape, _, scale = params
     while seq[0]:
@@ -72,12 +76,33 @@ def alter_completeness(contigs, completeness):
     while sum(removed_sizes) < (1 - float(completeness)) * total_length:
         removed_contigs.append(random.choice(list(contig_lengths.keys())))
         print(removed_contigs)
+        # relies on key name being "ID_len"
         removed_sizes.append(int(removed_contigs[-1].split('_')[0]))
         print(removed_sizes)
     new_contigs = {contig: contigs[contig] for contig in
                    contig_lengths.keys() if not contig in removed_contigs}
-    new_completeness = 1 - (sum(removed_sizes) - total_length)
+    new_completeness = 1 - (sum(removed_sizes) / total_length)
     return new_contigs, new_completeness
+
+def add_contamination(genome, all_contigs, contamination=1):
+    """Adds random contigs to a simulated MAG from other simulated MAGS,
+    to simulate contamination to specified fraction."""
+    contig_lengths = {length: int(''.join(length.split('_')[0])) for length in genome.keys()}
+    # sum for complete genome length
+    total_length = sum(contig_lengths.values())
+    i = 0
+    new_contamination = 1
+    # check if contaminated enough else loop
+    while contamination < new_contamination:
+        # random sample a genome from list of genomes
+        rand_genome = random.choice(all_contigs)
+        ## random sample a contig within genome
+        genome["c" + str(i)] = random.choice(list(rand_genome.values()))
+        contam_size = len(genome["c" + str(i)])
+        new_contamination = total_length + contam_size / total_length
+        total_length = total_length + contam_size
+        i += 1
+    return genome, contamination
 
 def output_randcontigs(name, genome):
     """Writes shuffled contigs to file"""
