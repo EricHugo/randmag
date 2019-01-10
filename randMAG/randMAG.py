@@ -92,6 +92,7 @@ def add_contamination(genome, all_contigs, contamination=1):
     total_length = sum(contig_lengths.values())
     i = 0
     new_contamination = 1
+    total_contam_size = 0
     # check if contaminated enough else loop
     while contamination < new_contamination:
         # random sample a genome from list of genomes
@@ -99,10 +100,10 @@ def add_contamination(genome, all_contigs, contamination=1):
         ## random sample a contig within genome
         genome["c" + str(i)] = random.choice(list(rand_genome.values()))
         contam_size = len(genome["c" + str(i)])
-        new_contamination = total_length + contam_size / total_length
-        total_length = total_length + contam_size
+        total_contam_size = total_contam_size + contam_size
+        new_contamination = total_length + total_contam_size / total_length
         i += 1
-    return genome, contamination
+    return genome, new_contamination
 
 def output_randcontigs(name, genome):
     """Writes shuffled contigs to file"""
@@ -145,11 +146,11 @@ def main():
                     if not re.match('#|\n', dist)]
     # here get distribution and parameters
     f = FitDist(distances)
+    # finding best distribution for the data
+    # mostly pointless since this script presumes that is gamma
     #distribution = f.find_best_dist()
     #f.histogram(distribution)
     params = stats.gamma.fit(distances)
-    #print(params)
-    # feed into worker with random sampling
 
     if not args.num:
         args.num = len(input_seqs)
