@@ -16,6 +16,7 @@ import re
 import os
 import random
 import string
+import multiprocessing as mp
 import numpy as np
 from Bio import SeqIO
 from scipy import stats
@@ -65,6 +66,8 @@ def split_contigs(seq, params, min_length=300):
         yield contig
 
 def alter_completeness(contigs, completeness):
+    """Given a set of contigs in a dict, randomly removes one contig at
+    a time until desired completeness is reached, or below."""
     # get the dict keys of contig lengths
     contig_lengths = {length: int(''.join(length.split('_')[0])) for length in contigs.keys()}
     # sum for complete genome length
@@ -72,13 +75,12 @@ def alter_completeness(contigs, completeness):
     # try to remove contig lengths down to completeness
     removed_contigs = []
     removed_sizes = []
-    print(type(sum(removed_sizes)))
     while sum(removed_sizes) < (1 - float(completeness)) * total_length:
         removed_contigs.append(random.choice(list(contig_lengths.keys())))
-        print(removed_contigs)
+        #print(removed_contigs)
         # relies on key name being "ID_len"
         removed_sizes.append(int(removed_contigs[-1].split('_')[0]))
-        print(removed_sizes)
+        #print(removed_sizes)
     new_contigs = {contig: contigs[contig] for contig in
                    contig_lengths.keys() if not contig in removed_contigs}
     new_completeness = 1 - (sum(removed_sizes) / total_length)
@@ -94,22 +96,27 @@ def add_contamination(genome, all_contigs, contamination=1):
     new_contamination = 1
     total_contam_size = 0
     # check if contaminated enough else loop
-    while contamination < new_contamination:
+    while contamination > new_contamination:
+        print("contam")
         # random sample a genome from list of genomes
         rand_genome = random.choice(all_contigs)
         ## random sample a contig within genome
         genome["c" + str(i)] = random.choice(list(rand_genome.values()))
         contam_size = len(genome["c" + str(i)])
+        print(contam_size)
         total_contam_size = total_contam_size + contam_size
-        new_contamination = total_length + total_contam_size / total_length
+        new_contamination = (total_length + total_contam_size) / total_length
+        print(total_length)
+        print(new_contamination)
         i += 1
     return genome, new_contamination
 
-def output_randcontigs(name, genome):
+def output_randcontigs(name, genome, completeness, contamination, q):
     """Writes shuffled contigs to file"""
     # give randomised names to avoid writing same file
     randname = ''.join([random.choice(string.ascii_lowercase)
                         for _ in range(8)])
+    q.put((name, randname, completeness, contamination))
     with open(name + '_' + randname + ".fna", "w") as handle:
         # necessary to put keys into list before shuffle
         shuffled_headers = list(genome.keys())
@@ -117,6 +124,16 @@ def output_randcontigs(name, genome):
         for header in shuffled_headers:
             handle.write(">" + str(header) + "\n")
             handle.write(str(genome[header]) + "\n")
+
+def _listener(q):
+    with open("simulated_MAGs.tab", "w") as handle:
+        while True:
+            out = q.get()
+            if out == "done":
+                break
+            for each in out:
+                handle.write(str(each) + '\t')
+            handle.write('\n')
 
 def main():
     parser = argparse.ArgumentParser(description="""
@@ -129,7 +146,7 @@ def main():
     parser.add_argument("-c", "--completeness", default="1.0",
                         help="Range of completeness levels to be produced. "\
                              "Default=1.0")
-    parser.add_argument("-r", "--contamination", default="0.0",
+    parser.add_argument("-r", "--contamination", default=0.0, type=float,
                         help="Range of contamination to be included in "\
                              "produced MAGs. Default=0.0")
     parser.add_argument("-n", "--num", default=False, type=int,
@@ -137,6 +154,10 @@ def main():
                              "one randomised per provided genome by default.")
     args = parser.parse_args()
 
+    manager = mp.Manager()
+    q = manager.Queue()
+    pool = mp.Pool(processes=2)
+    listener = pool.apply_async(_listener, (q,))
     with open(args.genome_tab) as seq_file:
         input_seqs = [seq.strip() for seq in seq_file
                       if not re.match('#|\n', seq)]
@@ -154,16 +175,26 @@ def main():
 
     if not args.num:
         args.num = len(input_seqs)
+    all_mags = []
     while args.num > 0:
         for seq in input_seqs:
             contigs, name = _worker(seq, params, min(distances))
             contigs, completeness = alter_completeness(contigs,
                                                        args.completeness)
-            output_randcontigs(name, contigs)
+            all_mags.append((name, completeness, contigs))
             args.num -= 1
             #print(args.num)
             if args.num <= 0:
                 break
+    raw_mags = [mag[2] for mag in all_mags]
+    for name, completeness, mag in all_mags:
+        contam_mag, contamination = add_contamination(mag, raw_mags,
+                                                      args.contamination)
+        output_randcontigs(name, contam_mag, completeness, contamination, q)
+    q.put("done")
+    listener.get()
+    pool.close()
+    pool.join()
 
 if __name__ == "__main__":
     main()
