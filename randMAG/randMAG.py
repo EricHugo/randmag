@@ -89,7 +89,8 @@ def alter_completeness(contigs, completeness):
 def add_contamination(genome, all_contigs, contamination=1):
     """Adds random contigs to a simulated MAG from other simulated MAGS,
     to simulate contamination to specified fraction."""
-    contig_lengths = {length: int(''.join(length.split('_')[0])) for length in genome.keys()}
+    contig_lengths = {length: int(''.join(length.split('_')[0])) for length
+                      in genome.keys()}
     # sum for complete genome length
     total_length = sum(contig_lengths.values())
     i = 0
@@ -97,17 +98,13 @@ def add_contamination(genome, all_contigs, contamination=1):
     total_contam_size = 0
     # check if contaminated enough else loop
     while contamination > new_contamination:
-        print("contam")
         # random sample a genome from list of genomes
         rand_genome = random.choice(all_contigs)
         ## random sample a contig within genome
         genome["c" + str(i)] = random.choice(list(rand_genome.values()))
         contam_size = len(genome["c" + str(i)])
-        print(contam_size)
         total_contam_size = total_contam_size + contam_size
         new_contamination = (total_length + total_contam_size) / total_length
-        print(total_length)
-        print(new_contamination)
         i += 1
     return genome, new_contamination
 
