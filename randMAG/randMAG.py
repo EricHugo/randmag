@@ -22,15 +22,15 @@ from Bio import SeqIO
 from scipy import stats
 from fitdist import FitDist
 
-def _worker(seq, dist_param, min_length):
+def _worker(seq, dist_param, min_length=300):
     basename = os.path.basename(seq)
     name = '.'.join(basename.split('.')[:-1])
     print(name)
     # find full length of genome
-    genome, genome_length = get_seq_length(seq)
+    genome, _ = get_seq_length(seq)
     # split into contig given sizes in loop
     contigs = {str(len(contig)) + "_" + str(i): contig for i, contig in
-               enumerate(split_contigs(genome, dist_param))}
+               enumerate(split_contigs(genome, dist_param, min_length))}
     #print(contigs)
     # return dict of genome with list of contig sizes produced
     ## to be used for contamination simulation
@@ -161,7 +161,7 @@ def main():
 
     with open(args.distribution) as dist_file:
         distances = [int(dist.strip()) for dist in dist_file
-                    if not re.match('#|\n', dist)]
+                     if not re.match('#|\n', dist)]
     # here get distribution and parameters
     f = FitDist(distances)
     # finding best distribution for the data
