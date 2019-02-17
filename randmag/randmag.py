@@ -50,6 +50,15 @@ def get_seq_length(seq):
     #print(seq_fasta[0][0:20])
     return seq_fasta, seq_length
 
+def check_chromosome(seq_fasta, cutoff=0.1):
+    """Implicitly determine chromosome by % length of total sequence"""
+    chromosomes = []
+    all_lengths = sum([len(seq) for seq in seq_fasta])
+    for seq in seq_fasta:
+        if (len(seq) / sum(all_lengths)) > cutoff:
+            chromosomes.append(seq)
+    return False
+
 def split_contigs(seq, params, min_length=300):
     """Splits given biopython SeqObject randomly according to parameters
     of a gamma distribution"""
