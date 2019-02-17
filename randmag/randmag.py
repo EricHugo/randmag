@@ -57,7 +57,7 @@ def check_chromosome(seq_fasta, cutoff=0.1):
     for seq in seq_fasta:
         if (len(seq) / sum(all_lengths)) > cutoff:
             chromosomes.append(seq)
-    return False
+    return chromosomes
 
 def split_contigs(seq, params, min_length=300):
     """Splits given biopython SeqObject randomly according to parameters
