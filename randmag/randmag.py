@@ -29,21 +29,24 @@ def _worker(seq, dist_param, min_length=300):
     # find full length of genome
     genome, _ = get_seq_length(seq)
     # split into contig given sizes in loop
-    contigs = {str(len(contig)) + "_" + str(i): contig for i, contig in
-               enumerate(split_contigs(genome, dist_param, min_length))}
+    all_contigs = {}
+    for n, chromosome in enumerate(genome):
+        contigs = {str(len(contig)) + "_" + str(n) + "_" + str(i): contig
+                   for i, contig in
+                   enumerate(split_contigs(chromosome, dist_param, min_length))}
+        all_contigs = {**all_contigs, **contigs}
     #print(contigs)
     # return dict of genome with list of contig sizes produced
     ## to be used for contamination simulation
     #print(genome_length)
-    return contigs, name
+    return all_contigs, name
 
 def get_seq_length(seq):
     """Returns a biopython SeqObject, and sequence length of given sequence
     file. Warns if file consists of multiple contigs."""
     seq_fasta = [seqi.seq for seqi in SeqIO.parse(seq, "fasta")]
     if len(seq_fasta) > 1:
-        print("Warning, more than one contig in genome", file=sys.stderr)
-        print(len(seq_fasta), file=sys.stderr)
+        seq_fasta = check_chromosome(seq_fasta)
     # only takes the length of first contig, should be chromosome
     seq_length = len(seq_fasta[0])
     #print(type(seq_fasta[0]))
@@ -55,7 +58,7 @@ def check_chromosome(seq_fasta, cutoff=0.1):
     chromosomes = []
     all_lengths = sum([len(seq) for seq in seq_fasta])
     for seq in seq_fasta:
-        if (len(seq) / sum(all_lengths)) > cutoff:
+        if len(seq) / all_lengths > cutoff:
             chromosomes.append(seq)
     return chromosomes
 
@@ -64,14 +67,14 @@ def split_contigs(seq, params, min_length=300):
     of a gamma distribution"""
     # get the parameters here
     shape, _, scale = params
-    while seq[0]:
+    while seq:
         size = round(np.random.gamma(shape, scale))
         #print(size)
-        contig = seq[0][0:size-1]
-        seq[0] = seq[0][size-1:]
-        if len(seq[0]) < min_length:
-            contig = contig + seq[0]
-            seq[0] = ''
+        contig = seq[0:size-1]
+        seq = seq[size-1:]
+        if len(seq) < min_length:
+            contig = contig + seq
+            seq = ''
         yield contig
 
 def alter_completeness(contigs, completeness):
@@ -79,20 +82,21 @@ def alter_completeness(contigs, completeness):
     a time until desired completeness is reached, or below."""
     # get the dict keys of contig lengths
     contig_lengths = {length: int(''.join(length.split('_')[0])) for length in contigs.keys()}
+    contig_keys = [key for key in contigs.keys()]
     # sum for complete genome length
     total_length = sum(contig_lengths.values())
     # try to remove contig lengths down to completeness
     removed_contigs = []
     removed_sizes = []
     while sum(removed_sizes) < (1 - float(completeness)) * total_length:
-        removed_contigs.append(random.choice(list(contig_lengths.keys())))
+        removed_contigs.append(random.choice(list(contig_keys)))
+        contig_keys = [key for key in contig_keys if not key in removed_contigs]
         #print(removed_contigs)
         # relies on key name being "ID_len"
         removed_sizes.append(int(removed_contigs[-1].split('_')[0]))
-        #print(removed_sizes)
     new_contigs = {contig: contigs[contig] for contig in
                    contig_lengths.keys() if not contig in removed_contigs}
-    new_completeness = 1 - (sum(removed_sizes) / total_length)
+    new_completeness = 1 - sum(removed_sizes) / total_length
     return new_contigs, new_completeness
 
 def add_contamination(genome, all_contigs, contamination=1):
@@ -105,6 +109,7 @@ def add_contamination(genome, all_contigs, contamination=1):
     i = 0
     new_contamination = 1
     total_contam_size = 0
+    used_sets = []
     # check if contaminated enough else loop
     while contamination > new_contamination:
         # random sample a genome from list of genomes
@@ -112,6 +117,9 @@ def add_contamination(genome, all_contigs, contamination=1):
         ## random sample a contig within genome
         genome["c" + str(i)] = random.choice(list(rand_genome.values()))
         contam_size = len(genome["c" + str(i)])
+        if (rand_genome, contam_size) in used_sets:
+            continue
+        used_sets.append((rand_genome, contam_size))
         total_contam_size = total_contam_size + contam_size
         new_contamination = (total_length + total_contam_size) / total_length
         i += 1
@@ -127,6 +135,8 @@ def output_randcontigs(name, genome, completeness, contamination, q):
         # necessary to put keys into list before shuffle
         shuffled_headers = list(genome.keys())
         random.shuffle(shuffled_headers)
+        #all_c = sum([len(seq) for seq in genome.values()])
+        #print(all_c)
         for header in shuffled_headers:
             handle.write(">" + str(header) + "\n")
             handle.write(str(genome[header]) + "\n")
