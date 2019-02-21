@@ -192,14 +192,17 @@ def main():
     if not args.num:
         args.num = len(input_seqs)
     all_mags = []
+    failed_genome = None
     while args.num > 0:
         for seq in input_seqs:
             contigs, name = _worker(seq, params, min(distances))
             contigs, completeness = alter_completeness(contigs,
                                                        args.completeness)
             # if empty due to low completeness request - retry
-            if not contigs:
+            if not contigs or completeness / float(args.completeness) < 0.5:
+                failed_genome = seq
                 continue
+            failed_genome = None
             all_mags.append((name, completeness, contigs))
             args.num -= 1
             #print(args.num)
