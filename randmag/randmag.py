@@ -95,7 +95,7 @@ def alter_completeness(contigs, completeness):
         # relies on key name being "ID_len"
         removed_sizes.append(int(removed_contigs[-1].split('_')[0]))
     new_contigs = {contig: contigs[contig] for contig in
-                   contig_lengths.keys() if not contig in removed_contigs}
+                   contig_lengths.keys() if contig not in removed_contigs}
     new_completeness = 1 - sum(removed_sizes) / total_length
     return new_contigs, new_completeness
 
@@ -157,16 +157,16 @@ def main():
                                     genomes."""
                                     )
     parser.add_argument("genome_tab", help="Genomes in .fna in list format")
-    parser.add_argument("distribution", help="Set of lengths to base the "\
+    parser.add_argument("distribution", help="Set of lengths to base the "
                                              "distribution on.")
     parser.add_argument("-c", "--completeness", default="1.0",
-                        help="Range of completeness levels to be produced. "\
+                        help="Range of completeness levels to be produced. "
                              "Default=1.0")
     parser.add_argument("-r", "--contamination", default=0.0, type=float,
-                        help="Range of contamination to be included in "\
+                        help="Range of contamination to be included in "
                              "produced MAGs. Default=0.0")
     parser.add_argument("-n", "--num", default=False, type=int,
-                        help="Number of randomised MAGs to produce. Produces "\
+                        help="Number of randomised MAGs to produce. Produces "
                              "one randomised per provided genome by default.")
     args = parser.parse_args()
 
@@ -185,8 +185,8 @@ def main():
     f = FitDist(distances)
     # finding best distribution for the data
     # mostly pointless since this script presumes that is gamma
-    #distribution = f.find_best_dist()
-    #f.histogram(distribution)
+    distribution = f.find_best_dist()
+    f.histogram(distribution)
     params = stats.gamma.fit(distances)
 
     if not args.num:
@@ -197,6 +197,9 @@ def main():
             contigs, name = _worker(seq, params, min(distances))
             contigs, completeness = alter_completeness(contigs,
                                                        args.completeness)
+            # if empty due to low completeness request - retry
+            if not contigs:
+                continue
             all_mags.append((name, completeness, contigs))
             args.num -= 1
             #print(args.num)
