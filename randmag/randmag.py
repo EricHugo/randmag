@@ -199,7 +199,7 @@ def main():
                 contigs, completeness = alter_completeness(contigs,
                                                            args.completeness)
                 # if empty due to low completeness request - retry
-                if not contigs or completeness / float(args.completeness) < 0.5:
+                if not contigs or float(args.completeness) - completeness > 0.05:
                     continue
                 break
             all_mags.append((name, completeness, contigs))
