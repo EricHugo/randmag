@@ -99,7 +99,7 @@ def alter_completeness(contigs, completeness):
     new_completeness = 1 - sum(removed_sizes) / total_length
     return new_contigs, new_completeness
 
-def add_contamination(genome, all_contigs, contamination=1):
+def add_contamination(genome, all_contigs, contamination=1.0):
     """Adds random contigs to a simulated MAG from other simulated MAGS,
     to simulate contamination to specified fraction."""
     contig_lengths = {length: int(''.join(length.split('_')[0])) for length
@@ -107,7 +107,7 @@ def add_contamination(genome, all_contigs, contamination=1):
     # sum for complete genome length
     total_length = sum(contig_lengths.values())
     i = 0
-    new_contamination = 1
+    new_contamination = 1.0
     total_contam_size = 0
     used_sets = []
     # check if contaminated enough else loop
@@ -162,7 +162,7 @@ def main():
     parser.add_argument("-c", "--completeness", default="1.0",
                         help="Range of completeness levels to be produced. "
                              "Default=1.0")
-    parser.add_argument("-r", "--contamination", default=0.0, type=float,
+    parser.add_argument("-r", "--contamination", default=1.0, type=float,
                         help="Range of contamination to be included in "
                              "produced MAGs. Default=0.0")
     parser.add_argument("-n", "--num", default=False, type=int,
