@@ -70,7 +70,7 @@ Optional arguments
                         Default=1.0
   -r CONTAMINATION, --contamination CONTAMINATION
                         Range of contamination to be included in produced
-                        MAGs. Default=0.0
+                        MAGs. Default=1.0
   -n NUM, --num NUM     Number of randomised MAGs to produce. Produces one
                         randomised per provided genome by default.
 
@@ -109,11 +109,11 @@ each input .fna. Also produced is ``simulated_MAGs.tab``, a tabular file contain
 file, the unique 8-char suffix assigned, completeness-, and redundancy fractions::
 
     $ head -n5 simulated_MAGs.tab
-    GCF_000005845.2_ASM584v2_genomic	mpmwoutk	1.0	1
-    GCF_000006745.1_ASM674v1_genomic	mmqehxfx	1.0	1
-    GCF_000006765.1_ASM676v1_genomic	engiyxoz	1.0	1
-    GCF_000006785.2_ASM678v2_genomic	rtvayhqu	1.0	1
-    GCF_000006845.1_ASM684v1_genomic	bzpsqnfq	1.0	1
+    GCF_000005845.2_ASM584v2_genomic	mpmwoutk	1.0	1.0
+    GCF_000006745.1_ASM674v1_genomic	mmqehxfx	1.0	1.0
+    GCF_000006765.1_ASM676v1_genomic	engiyxoz	1.0	1.0
+    GCF_000006785.2_ASM678v2_genomic	rtvayhqu	1.0	1.0
+    GCF_000006845.1_ASM684v1_genomic	bzpsqnfq	1.0	1.0
 
 The content of the fasta files in this example remained unchanged apart from
 being split into contigs.
