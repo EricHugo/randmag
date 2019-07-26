@@ -16,10 +16,14 @@ tools methods for dealing with SAGs and MAGs the ability to simulate such data
 sets is paramount.
 
 randMAG is a slim software aimed at producing artificial MAGs or SAGs from existent
-genomes. randMAG produces randomised MAGs based on whole genomes provided, a
+complete genomes. randMAG produces randomised MAGs based on whole genomes provided, a
 distribution of contig lengths given, as well as desired completeness- and
 contamination levels.
 
+Packaged with randMAG is a file containing the lengths of 192243 contigs of 2284
+bacterial MAGs [1] from the Tara Oceans metagenomic survey.
+
+#. [TullyEtAl_2018]_
 
 Dependencies
 --------------
@@ -61,6 +65,9 @@ a distribution of contig sizes by which the artificial contigs will be split, e.
     149609
     ...
 
+Optionally, ``distribution`` can be filled with ``Tara_bact`` to use the set of contig
+lengths from Tara Oceans described in the introduction.
+
 
 Optional arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -89,7 +96,7 @@ Initially, create a file with a list of the genomic fasta files which are to be 
 
 Then a second file which is a list of lengths representing the distribution of contig sizes::
 
-    $ head -n5 Bact_lengths_tara.list
+    $ head -n5 Tara_bact
     23967
     15981
     149609
@@ -100,9 +107,9 @@ Example 1 - Split into contigs
 """"""""""""""""""""""""""""""
 
 This example splits up all .fna files in ``reference_fna.list`` into contigs according
-to the distribution of contig lengths in ``Bact_lengths_tara.list``::
+to the distribution of contig lengths in ``Tara_bact``::
 
-   $ randMAG reference_fna.list Bact_lengths_tara.list
+   $ randMAG reference_fna.list Tara_bact
 
 The result is all a single .fna file created in the current working directory for
 each input .fna. Also produced is ``simulated_MAGs.tab``, a tabular file containing input
@@ -124,7 +131,7 @@ To change the completeness and contamination of the fasta files the ``-c`` and `
 arguments need to be used. The ``-n`` argument can be used to get precisely the
 desired number of unqiue MAGs::
 
-    $ randMAG reference_fna.list Bact_lengths_tara.list -c 0.7 -r 1.2 -n 10000
+    $ randMAG reference_fna.list Tara_bact -c 0.7 -r 1.2 -n 10000
 
 This will produce files that are at most 70% complete and at least 20% contaminated::
 
@@ -139,3 +146,8 @@ As well as 10 000 unique MAGs as requested with ``-n``::
 
     $ wc -l simulated_MAGs.tab
     10000 simulated_MAGs.tab
+
+References
+----------------
+
+.. [TullyEtAl_2018] Tully,B.J. et al. (2018) The reconstruction of 2,631 draft metagenome-assembled genomes from the global oceans. Sci. Data, 5, 170203

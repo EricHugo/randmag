@@ -20,7 +20,13 @@ import multiprocessing as mp
 import numpy as np
 from Bio import SeqIO
 from scipy import stats
-from fitdist import FitDist
+try:
+    from randmag import FitDist
+except ImportError:
+    from fitdist import FitDist
+
+BUILTIN_LENGTHS = {'Tara_bact': 'share/Tara_bact.list'}
+PATH = os.path.abspath(os.path.dirname(__file__))
 
 def _worker(seq, dist_param, min_length=300):
     basename = os.path.basename(seq)
@@ -170,6 +176,8 @@ def main():
                              "one randomised per provided genome by default.")
     args = parser.parse_args()
 
+    if args.distribution in BUILTIN_LENGTHS.keys():
+        args.distribution = os.path.join(PATH, BUILTIN_LENGTHS[args.distribution])
     manager = mp.Manager()
     q = manager.Queue()
     pool = mp.Pool(processes=2)
