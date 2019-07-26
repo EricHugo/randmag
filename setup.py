@@ -4,7 +4,7 @@ with open('README.rst', mode='r') as f:
     l_description = f.read()
 
 setup(name='randmag',
-      version='1.1.0',
+      version='1.2.0',
       description='Construct artifical MAGs from complete genomes according to distribution',
       long_description=l_description,
       url='https://bitbucket.org/EricHugo/randmag',
